@@ -1,0 +1,56 @@
+import mysql.connector
+
+db = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="",
+  database="veggie_for_you"
+)
+
+cursor = db.cursor()
+sql = "INSERT INTO sayur (sayur, satuan, harga, stock) VALUES (%s, %s, %s, %s)"
+values = [
+    ("bayam", "ikat", 3000, 20),
+    ("kangkung", "ikat", 3000, 20),
+    ("sawi", "ikat", 5000, 20),
+    ("sawi putih", "kg", 11000, 10),
+    ("kol", "kg", 9000, 10),
+    ("daun singkong", "ikat", 2000, 15),
+    ("daun katuk", "ikat", 3000, 20),
+    ("daun kelor", "ikat", 4000, 15),
+    ("nangka", "100gr", 1300, 50),
+    ("kentang", "100gr", 700, 100),
+    ("wortel", "100gr", 600, 100),
+    ("jagung", "buah", 1500, 20),
+    ("tomat", "100gr", 600, 100),
+    ("paprika merah", "100gr", 3200, 100),
+    ("paprika kuning", "100gr", 2700, 100),
+    ("paprika hijau", "100gr", 2000, 100),
+    ("cabe rawit", "100gr", 4200, 200),
+    ("jeruk nipis", "100gr", 800, 50),
+    ("lombok keriting", "100gr", 1200, 150),
+    ("terong", "buah", 1500, 20),
+    ("timun", "buah", 1000, 20),
+    ("labu", "kg", 8000, 10),
+    ("labu siam", "100gr", 2000, 100),
+    ("gambas", "buah", 1500, 20),
+    ("pare", "buah", 1500, 20),
+    ("brokoli", "100gr", 900, 100),
+    ("buncis", "100gr", 550, 100),
+    ("kacang panjang", "ikat", 4000, 20),
+    ("toge", "100gr", 1500, 100),
+    ("bawang merah", "100gr", 1400, 200),
+    ("bawang putih", "100gr", 1500, 200),
+    ("bawang bombay", "100gr", 2000, 150),
+    ("daun kemangi", "ikat", 2000, 10),
+    ("daun bawang", "ikat", 5000, 15),
+    ("daun sop", "ikat", 4000, 10),
+    ("tahu", "bungkus", 5000, 20),
+    ("tempe", "bungkus", 5000, 20)
+]
+
+for val in values:
+  cursor.execute(sql, val)
+  db.commit()
+
+print("{} data ditambahkan".format(len(values)))

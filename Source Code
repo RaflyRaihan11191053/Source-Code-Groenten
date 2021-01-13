@@ -1,0 +1,307 @@
+import sys
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import QDate, QTime
+import mysql.connector
+
+
+class Aplikasi:
+    def __init__(self):
+        self.db = mysql.connector.connect(
+          host="localhost",
+          user="root",
+          passwd="",
+          database = "veggie_for_you"
+        )
+
+        self.cursor = self.db.cursor()
+
+        self.app = QApplication([])
+
+        self.window = QMainWindow()
+        self.window.setGeometry(300, 100, 1000, 500)
+        self.window.setWindowTitle("Groenten")
+
+        self.lbl_sayur = QLabel("Ingin beli sayur apa anda hari ini ?", self.window)
+        self.lbl_sayur.move(10, 40)
+        self.lbl_sayur.adjustSize()
+
+        self.keranjang = []
+        self.keranjang_harga= []
+
+        self.cbx_sayur = QComboBox(self.window)
+        self.harga_sayur_indeks = []
+        self.cbx_sayur.setStyleSheet("background-color : grey")
+        self.cbx_sayur.setFixedHeight(28)
+        self.cbx_sayur.setFixedWidth(250)
+        self.cbx_sayur.move(260, 38)
+
+        self.spinbox = QSpinBox(self.window)
+        self.spinbox.adjustSize()
+        self.spinbox.move(525,38)
+        self.spinbox.setStyleSheet("background-color : grey")
+        self.spinbox.setMinimum(1)
+
+        sql = "SELECT * FROM sayur"
+        self.cursor.execute(sql)
+        self.results = self.cursor.fetchall()
+        for data in self.results:
+          self.cbx_sayur.addItem(data[1])
+          self.harga_sayur_indeks.append(data[2])
+
+        self.buttonkeranjang = QPushButton(self.window)
+        self.buttonkeranjang.setText("Masukkan ke Keranjang")
+        self.buttonkeranjang.adjustSize()
+        self.buttonkeranjang.move(605, 38)
+        self.buttonkeranjang.setStyleSheet("background-color : blue")
+        self.buttonkeranjang.clicked.connect(self.hitungsayur)
+
+    def hitungsayur(self):
+        self.keranjang.append(self.cbx_sayur.currentText() + ' x' + str(self.spinbox.value()))
+        self.keranjang_harga.append(self.harga_sayur_indeks[int(self.cbx_sayur.currentIndex())] * self.spinbox.value())
+        isi_keranjang = ''
+        i = 0
+        while (i < len(self.keranjang)):
+            self.isi_keranjang = str(self.isi_keranjang) + "\n" + str(self.keranjang[i])
+            i += 1
+        self.btn_list_keranjang.setEnabled(True)
+        self.btn_clear.setEnabled(True)
+        self.message_box = QMessageBox(self.window)
+        self.message_box.setWindowTitle("Keranjang Belanjaan")
+        self.message_box.setText("Berhasil Menambahkan")
+        self.message_box.exec_()
+        self.spinbox.setValue(1)
+
+    def listKeranjang(self):
+        self.message_box = QMessageBox(self.window)
+        self.isi_keranjang = ""
+        i = 0
+        while(i < len(self.keranjang)):
+            self.isi_keranjang = str(self.isi_keranjang) + "\n" + str(self.keranjang[i])
+            i+=1
+        self.message_box.setWindowTitle("List Keranjang")
+        self.message_box.setText(self.isi_keranjang)
+        self.message_box.exec_()
+
+    def clearData(self):
+        self.keranjang.clear()
+        self.keranjang_harga.clear()
+        self.message_box = QMessageBox(self.window)
+        self.message_box.setWindowTitle("Clear Data")
+        self.message_box.setText("Berhasil Menghapus")
+        self.message_box.exec_()
+
+    def click_metode(self, btn):
+        self.label_bayar.setText(f"Metode Pembayaran : {btn.text()}")
+        self.label_bayar.adjustSize()
+
+    def listHitung(self):
+        self.harga_keranjang = 0
+        self.isi_keranjang = ''
+        i = 0
+        while (i < len(self.keranjang)):
+            self.isi_keranjang = str(self.isi_keranjang) + "\n" + str(self.keranjang[i])
+            i += 1
+        j = 0
+        while (j < len(self.keranjang_harga)):
+            self.harga_keranjang = self.harga_keranjang + self.keranjang_harga[j]
+            j += 1
+
+        if self.cbx_sayur.currentText() == '' or self.ledit_nama.text() == '' or self.ledit_alamat.text() == '' or self.ledit_telpon.text() == '' or self.ledit_kelurahan.text() == '' or self.cbx_kecamatan.currentText() == '' or self.ledit_kode_pos.text() == ''\
+                or self.ledit_tanggal.text() == '' or self.ledit_jam.text() == '':
+            self.message_box = QMessageBox(self.window)
+            self.message_box.setWindowTitle("Gagal")
+            self.message_box.setText("Data Masih Kosong")
+            # message_box.section(QMessage.Critical)
+            self.message_box.exec_()
+        else:
+            self.isi_field = self.ledit_nama.text()
+            self.isi_field1 = self.ledit_alamat.text()
+            self.isi_field2 = self.ledit_kelurahan.text()
+            self.isi_field3 = self.cbx_kecamatan.currentText()
+            self.isi_field4 = self.ledit_kode_pos.text()
+            self.isi_field5 = self.ledit_tanggal.text()
+            self.isi_field6 = self.ledit_jam.text()
+            self.isi_field7 = self.ledit_telpon.text()
+
+            self.sql = "INSERT INTO customers (sayur1, harga, nama, alamat, nomor_telpon, kelurahan, kecamatan, kode_pos, tanggal, jam) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+            self.val = (self.isi_keranjang, self.harga_keranjang, self.ledit_nama.text(), self.ledit_alamat.text(), self.ledit_telpon.text(),
+                   self.ledit_kelurahan.text(), self.cbx_kecamatan.currentText(),
+                   self.ledit_kode_pos.text(), self.ledit_tanggal.text(), self.ledit_jam.text())
+            self.cursor.execute(self.sql, self.val)
+            self.db.commit()
+
+            self.isi_keranjang = ""
+            i = 0
+            while (i < len(self.keranjang)):
+                self.isi_keranjang = str(self.isi_keranjang) + "\n" + str(self.keranjang[i])
+                i += 1
+            self.message_box = QMessageBox(self.window)
+            self.message_box.setWindowTitle("Konfirmasi")
+            self.message_box.setText(f"Belanjaan atas nama {self.isi_field} akan kami kirim ke alamat {self.isi_field1}, Kelurahan {self.isi_field2}, Kecamatan {self.isi_field3}, Kode pos {self.isi_field4}\nNomor Telepon yang dapat dihubungi : {self.isi_field7}\n\nMetode Pembayaran : {self.radio_group_metode.checkedButton().text()}\n{self.isi_keranjang}\nTotal harga belanjaan : {self.harga_keranjang}\n\n Akan kami antarkan pada Tanggal {self.isi_field5} Pukul {self.isi_field6}")
+            self.message_box.exec_()
+
+    def riwayat(self):
+        cursor = self.db.cursor()
+        sql = "SELECT * FROM customers"
+        cursor.execute(sql)
+        Form = QtWidgets.QWidget()
+        isi_history = ''
+        results = cursor.fetchall()
+        for data in results:
+            isi_history = isi_history + '\n' + str(data[0]) + '\n' + str(data[1]) + '\n' + str(
+                data[2]) + '\n' + str(data[3]) + '\n' + str(data[4]) + \
+                          '\n' + str(data[5]) + '\n' + str(data[6]) + '\n' + str(data[7]) + '\n' + str(
+                data[8]) + '\n' + str(data[9]) + '\n' + str(data[10]) + '\n=========================\n'
+        message_box = QMessageBox(self.window)
+        message_box.setWindowTitle("Riwayat Penjualan Sayur")
+        message_box.setText(isi_history)
+        message_box.exec_()
+
+    def refactorUI(self):
+        self.btn_list_keranjang = QPushButton("List Keranjang", self.window)
+        self.btn_list_keranjang.move(785, 38)
+        self.btn_list_keranjang.adjustSize()
+        self.btn_list_keranjang.clicked.connect(self.listKeranjang)
+
+        self.btn_clear = QPushButton("Clear", self.window)
+        self.btn_clear.move(900, 38)
+        self.btn_clear.adjustSize()
+        self.btn_clear.setStyleSheet("background-color : red")
+        self.btn_clear.clicked.connect(self.clearData)
+
+        self.label_metode = QLabel("Proses pembayaran belanjaan anda : ", self.window)
+        self.label_metode.adjustSize()
+        self.label_metode.move(10, 80)
+
+        self.radio_metode_transfer = QRadioButton("Transfer melalui bank", self.window)
+        self.radio_metode_COD = QRadioButton("Cash on Delivery", self.window)
+        self.radio_metode_transfer.adjustSize()
+        self.radio_metode_COD.adjustSize()
+        self.radio_group_metode = QButtonGroup(self.window)
+        self.radio_group_metode.addButton(self.radio_metode_transfer)
+        self.radio_group_metode.addButton(self.radio_metode_COD)
+        self.radio_metode_transfer.setChecked(True)
+        self.radio_metode_transfer.move(275, 78)
+        self.radio_metode_COD.move(275, 100)
+        self.radio_group_metode.buttonClicked.connect(self.click_metode)
+
+        self.label_nama = QLabel(self.window)
+        self.label_nama.setText("Nama : ")
+        self.label_nama.setFixedWidth(100)
+        self.label_nama.move(10, 140)
+        self.ledit_nama = QLineEdit(self.window)
+        self.ledit_nama.setPlaceholderText('Masukkan Nama Anda')
+        self.ledit_nama.setToolTip('Nama Anda')
+        self.ledit_nama.move(150, 140)
+        self.ledit_nama.setFixedWidth(250)
+
+        self.label_alamat = QLabel(self.window)
+        self.label_alamat.setText("Alamat : ")
+        self.label_alamat.setFixedWidth(100)
+        self.label_alamat.move(10, 180)
+        self.ledit_alamat = QLineEdit(self.window)
+        self.ledit_alamat.setPlaceholderText('Masukkan Alamat Anda')
+        self.ledit_alamat.setToolTip('Alamat Anda')
+        self.ledit_alamat.move(150, 180)
+        self.ledit_alamat.setFixedWidth(250)
+
+        self.label_telpon = QLabel(self.window)
+        self.label_telpon.setText("Nomor Telepon : ")
+        self.label_telpon.setFixedWidth(120)
+        self.label_telpon.move(10, 220)
+        self.ledit_telpon = QLineEdit(self.window)
+        self.ledit_telpon.setPlaceholderText('Masukkan Nomor Telepon Anda')
+        self.ledit_telpon.setToolTip('Nomor Telepon Anda')
+        self.ledit_telpon.move(150, 220)
+        self.ledit_telpon.setFixedWidth(250)
+
+        self.label_kelurahan = QLabel(self.window)
+        self.label_kelurahan.setText("Kelurahan : ")
+        self.label_kelurahan.setFixedWidth(100)
+        self.label_kelurahan.move(10, 260)
+        self.ledit_kelurahan = QLineEdit(self.window)
+        self.ledit_kelurahan.setPlaceholderText('Masukkan Kelurahan Anda')
+        self.ledit_kelurahan.setToolTip('Kelurahan Anda')
+        self.ledit_kelurahan.move(150, 260)
+        self.ledit_kelurahan.setFixedWidth(250)
+
+        self.lbl_kecamatan = QLabel("Kecamatan : ", self.window)
+        self.lbl_kecamatan.move(10, 303)
+        self.lbl_kecamatan.adjustSize()
+        self.cbx_kecamatan = QComboBox(self.window)
+        self.cbx_kecamatan.addItems(
+            ['Kecamatan', 'Balikpapan Utara', 'Balikpapan Barat', 'Balikpapan Timur', 'Balikpapan Selatan',
+             'Balikpapan Tengah',
+             'Balikpapan Kota'])
+        self.cbx_kecamatan.adjustSize()
+        self.cbx_kecamatan.move(150, 300)
+
+        self.label_kode_pos = QLabel(self.window)
+        self.label_kode_pos.setText("Kode pos : ")
+        self.label_kode_pos.setFixedWidth(100)
+        self.label_kode_pos.move(10, 340)
+        self.ledit_kode_pos = QLineEdit(self.window)
+        self.ledit_kode_pos.setPlaceholderText('Masukkan Kode Pos Anda')
+        self.ledit_kode_pos.setToolTip('Kode Pos Anda')
+        self.ledit_kode_pos.move(150, 340)
+        self.ledit_kode_pos.setFixedWidth(250)
+
+        self.label_pengiriman = QLabel(self.window)
+        self.label_pengiriman.setText("Pengiriman : ")
+        self.label_pengiriman.setFixedWidth(100)
+        self.label_pengiriman.move(500, 140)
+
+        self.label_tanggal = QLabel(self.window)
+        self.label_tanggal.setText("Tanggal : ")
+        self.label_tanggal.setFixedWidth(100)
+        self.label_tanggal.move(500, 180)
+        self.ledit_tanggal = QDateEdit(self.window)
+        self.ledit_tanggal.setCalendarPopup(True)
+        self.ledit_tanggal.setDate(QDate(2020, 6, 2))
+        self.ledit_tanggal.setToolTip('Tanggal')
+        self.ledit_tanggal.move(600, 180)
+        self.ledit_tanggal.setFixedWidth(100)
+
+        self.label_jam = QLabel(self.window)
+        self.label_jam.setText("Pukul : ")
+        self.label_jam.setFixedWidth(100)
+        self.label_jam.move(500, 220)
+        self.ledit_jam = QTimeEdit(self.window)
+        self.time = QTime.currentTime()
+        self.ledit_jam.setToolTip('Jam')
+        self.ledit_jam.move(600, 220)
+        self.ledit_jam.setFixedWidth(100)
+
+        self.label_bayar = QLabel("")
+
+        self.btn_hitung = QPushButton("Beli", self.window)
+        self.btn_hitung.move(30, 390)
+        self.btn_hitung.setFixedHeight(40)
+        self.btn_hitung.setFixedWidth(130)
+        self.btn_hitung.clicked.connect(self.listHitung)
+
+        self.btn_history = QPushButton("Riwayat Penjualan", self.window)
+        self.btn_history.move(30, 450)
+        self.btn_history.adjustSize()
+        self.btn_history.setStyleSheet("background-color : green")
+        self.btn_history.clicked.connect(self.riwayat)
+
+        self.btn_list_keranjang.setEnabled(False)
+        self.btn_clear.setEnabled(False)
+
+        self.font_total = QFont()
+        self.font_total.setBold(True)
+        self.font_total.setPointSize(16)
+
+        self.lbl_total = QLabel(self.window)
+        self.lbl_total.setFont(self.font_total)
+        self.lbl_total.move(10, 350)
+
+        self.window.show()
+        self.app.exec_()
+
+
+app = Aplikasi()
+app.refactorUI()

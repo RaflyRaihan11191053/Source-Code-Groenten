@@ -1,0 +1,17 @@
+import mysql.connector
+
+db = mysql.connector.connect(
+  host="localhost",
+  user="root",
+  passwd="",
+  database="veggie_for_you"
+)
+
+cursor = db.cursor()
+sql = "UPDATE sayur SET sayur=%s, satuan=%s, harga=%s, stock=%s WHERE id=%s"
+val = ("")
+cursor.execute(sql, val)
+
+db.commit()
+
+print("{} data diubah".format(cursor.rowcount))
